@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>注册</title>
+    <link rel="stylesheet" type="text/css" href="css/common.css">
+    <link rel="stylesheet" href="css/register.css">
+    <!--导入jquery-->
+    <script src="js/jquery-3.3.1.js"></script>
+    <script src="js/jquery.validate.js"></script>
+    <!--手机号验证-->
+    <script src="js/common.js"></script>
+    <!--邮箱验证-->
+    <script src="js/email.js"></script>
+</head>
+<body>
+<!--引入头部-->
+<div id="header"></div>
+<!-- 头部 end -->
+<div class="rg_layout">
+    <div class="rg_form clearfix">
+        <div class="rg_form_left">
+            <p>新用户注册</p>
+            <p>USER REGISTER</p>
+        </div>
+        <div class="rg_form_center">
+
+            <!--注册表单-->
+            <form id="registerForm">
+                <!--提交处理请求的标识符-->
+                <input type="hidden" name="action" value="register">
+                <table style="margin-top: 25px;">
+                    <tr>
+                        <td class="td_left">
+                            <label for="username">用户名</label>
+                        </td>
+                        <td class="td_right">
+                            <input type="text" id="username" name="username" placeholder="请输入账号">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="td_left">
+                            <label for="password">密码</label>
+                        </td>
+                        <td class="td_right">
+                            <input type="password" id="password" name="password" placeholder="请输入密码">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="td_left">
+                            <label for="email">Email</label>
+                        </td>
+                        <td class="td_right">
+                            <input type="text" id="email" name="email" placeholder="请输入Email">
+                            <label id="email-error" class="error" for="email"></label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="td_left">
+                            <label for="name">姓名</label>
+                        </td>
+                        <td class="td_right">
+                            <input type="text" id="name" name="name" placeholder="请输入真实姓名">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="td_left">
+                            <label for="telephone">手机号</label>
+                        </td>
+                        <td class="td_right">
+                            <input type="text" id="telephone" name="telephone" placeholder="请输入您的手机号">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="td_left">
+                            <label for="sex">性别</label>
+                        </td>
+                        <td class="td_right gender">
+                            <input type="radio" id="sex" name="sex" value="男" checked> 男
+                            <input type="radio" name="sex" value="女"> 女
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="td_left">
+                            <label for="birthday">出生日期</label>
+                        </td>
+                        <td class="td_right">
+                            <input type="date" id="birthday" name="birthday" placeholder="年/月/日">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="td_left">
+                            <label for="check">验证码</label>
+                        </td>
+                        <td class="td_right check">
+                            <input type="text" id="check" name="check" class="check">
+                            <img src="checkCodeServlet" height="32px" alt="" onclick="changeCheckCode(this)">
+                            <script type="text/javascript">
+                                //图片点击事件
+                                function changeCheckCode(img) {
+                                    img.src = "checkCodeServlet?" + new Date().getTime();
+                                }
+                            </script>
+                            <!--验证码错误提示消息-->
+                            <div id="errorMsg" class="alert alert-danger"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="td_left">
+                        </td>
+                        <td class="td_right check">
+                            <input type="submit" class="submit" value="注册">
+                            <span id="msg" style="color: red;"></span>
+                        </td>
+                    </tr>
+                </table>
+            </form>
+        </div>
+        <div class="rg_form_right">
+            <p>
+                已有账号？
+                <a href="#">立即登录</a>
+            </p>
+        </div>
+    </div>
+</div>
+<!--引入尾部-->
+<div id="footer"></div>
+<!--导入布局js，共享header和footer-->
+<script type="text/javascript" src="js/include.js"></script>
+
+<script>
+
+    $("#registerForm").validate({
+
+        rules: {
+            username: {
+                required: true
+            },
+            password: {
+                required: true
+            },
+            email: {
+                required: true,
+                email: true,
+                /*
+                    验证唯一性
+                    remote:"check.php"	使用 ajax 方法调用 check.php 验证输入值。
+                    使用 ajax 方式进行验证，默认会提交当前验证的值到远程地址，如果需要提交其他的值，可以使用 data 选项。
+                //使用自定义邮箱格式
+                emailFmt:true
+                 */
+                remote: "/checkEmailServlet?methodName=checkEmail"
+
+            },
+            name: {
+                required: true
+            },
+            telephone: {
+                //common.js文件中已经封装数据
+                phoneFmt: true
+            }
+
+        },
+        messages: {
+            username: {
+                required: "用户名不能为空!"
+            },
+            password: {
+                required: "密码格式错误!"
+            },
+            email: {
+                required: "请输入邮箱",
+                email: "请输入正确的邮箱!",
+                remote:"email已存在，请更换！"
+            },
+            name: {
+                required: "用户名错误!"
+            },
+            telephone: {}
+        },
+        submitHandler:function(form){
+            var serialize = $(form).serialize();
+            $.post("/userServlet?methodName=register",serialize,function (result) {
+                if(result.checkFlag){
+                    //注册成功： 跳转到register_ok.html
+                    location.href = "/register_ok.html";
+                }else{
+                    //注册失败： 在register.html给出错误提示信息
+                    var errorMsg = result.msg;
+                    $("#msg").html(errorMsg);
+                }
+            },"json");
+            return false;
+        }
+
+        /*
+        *
+        *
+        *
+        *
+        *  //校验email的唯一性
+        //绑定事件
+        $("#email").blur(function () {
+            //校验email的合法性：如果合法再发请求
+            var email = this.value;
+            var regExp = /^([a-z0-9_\.-]+)@([\da-z\.-]+)\.([a-z\.]{2,6})$/;
+            if(regExp.test(email)){
+                //发送请求（异步）校验email唯一性
+                $.get("userServlet?methodName=checkEmail",{email:this.value},function (result) {
+                    //处理响应数据
+                    if(result.checkEmailFlag) {
+                        //email已存在
+                        $("#email-error").show().html("email已存在！")
+                    }else{
+                        //email不存在
+                        $("#email-error").show().html("√")
+                    }
+                },"json");
+            }else{
+                $("#email-error").show().html("email不合法！")
+            }
+        });
+        *
+        *
+        * submitHandler:function (form) {
+                //校验通过之后提交表单：异步提交-ajax
+                //param：方式一  字符串 "name=value&name=value"  方式二：对象 {name:value,name:value}
+
+                //jq的表单序列化： jq对象.serialize(); === "name=value&name=value"
+                var formData = $(form).serialize();
+                $.post("/registServlet",formData,function (result) {
+                    //处理响应数据：{checkFlag:true}
+                    console.log(result);
+                    if(result.checkFlag){
+                        //注册成功： 跳转到register_ok.html
+                        location.href = "/register_ok.html";
+                    }else{
+                        //注册失败： 在register.html给出错误提示信息
+                        var errorMsg = result.msg;
+                        $("#msg").html(errorMsg);
+                    }
+                },"json");
+            }
+        *
+        * */
+
+    });
+
+</script>
+
+<script>
+    <!--添加验证码离焦事件-->
+
+    $("#check").blur(function () {
+        var value = this.value;
+        $.get("/userServlet?methodName=checkCode",{code:this.value},function (result) {
+            if (!result.codeFlag) {
+            //    说明验证码不正确
+                $("#errorMsg").html("<font color='red'>验证码错误!</font>");
+            }else {
+                //    说明验证码正确
+                $("#errorMsg").html("");
+            }
+        },"json");
+    });
+
+
+</script>
+
+
+</body>
+</html>

@@ -1,0 +1,184 @@
+<!-- 头部 start -->
+<header id="header">
+    <div class="top_banner">
+        <img src="images/top_banner.jpg" alt="">
+    </div>
+    <div class="shortcut">
+        <!-- 未登录状态  -->
+        <div class="login_out">
+            <a href="login.html">登录</a>
+            <a href="register.html">注册</a>
+        </div>
+        <!-- 登录状态  -->
+        <div class="login">
+            <span>欢迎回来，admin</span>
+            <a href="myfavorite.html" class="collection">我的收藏</a>
+            <!--<a href="javascript:;>退出</a>-->
+            <a href="/userServlet?methodName=loginOut">退出</a>
+        </div>
+    </div>
+    <div class="header_wrap">
+        <div class="topbar">
+            <div class="logo">
+                <a href="/"><img src="images/logo.jpg" alt=""></a>
+            </div>
+            <div class="search">
+                <input name="" type="text" placeholder="请输入路线名称" class="search_input" autocomplete="off"
+                       id="search_input">
+                <a href="javascript:;" onclick="searchData();" class="search-button">搜索</a>
+            </div>
+            <div class="hottel">
+                <div class="hot_pic">
+                    <img src="images/hot_tel.jpg" alt="">
+                </div>
+                <div class="hot_tel">
+                    <p class="hot_time">客服热线(9:00-6:00)</p>
+                    <p class="hot_num">400-618-9090</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+<!-- 头部 end -->
+<!-- 首页导航 -->
+<div class="navitem">
+    <ul class="nav">
+        <!--<li class="nav-active"><a href="index.html">首页</a></li>
+        <li><a href="route_list.html">门票</a></li>
+        <li><a href="route_list.html">酒店</a></li>
+        <li><a href="route_list.html">香港车票</a></li>
+        <li><a href="route_list.html">出境游</a></li>
+        <li><a href="route_list.html">国内游</a></li>
+        <li><a href="route_list.html">港澳游</a></li>
+        <li><a href="route_list.html">抱团定制</a></li>
+        <li><a href="route_list.html">全球自由行</a></li>
+        <li><a href="favoriterank.html">收藏排行榜</a></li>-->
+    </ul>
+</div>
+
+<link rel="stylesheet" href="css/jquery-ui.css">
+<script src="js/jquery-3.3.1.js"></script>
+<script src="js/jquery-ui.js"></script>
+<script src="js/getParameter.js"></script>
+
+<script>
+
+    //页面加载事件 将搜索框数据回显在搜索框中
+    $(function () {
+        var rname = getParameter("rname");
+        if (rname) {
+            //如果有值进行转码 否则 不转码
+            rname = decodeURI(rname);
+            $("#search_input").val(rname);
+        }
+    });
+
+    //给搜索按钮添加点击事件
+    function searchData() {
+        // debugger;
+        //获取页面cid
+        var cid = getParameter("cid");
+        var rname = $("#search_input").val();
+        //获取rul上面的rname
+        if (cid) {
+            location.href = "/route_list.html?rname=" + rname + "&cid=" + cid;
+        } else {
+            location.href = "/route_list.html?rname=" + rname;
+        }
+    };
+
+
+    /*
+    *
+    *
+            1. header.html页面加载完成之后，发送异步请求到UserServlet中，从session中获取用户数据；
+        2. 如果能够获取数据：说明用户已登录，将session中的用户数据更新到页面上；
+        3. 如果不能够获取数据：说明用户尚未登录，拼接信息提示用户登录
+    *
+    * */
+
+    //页面加载事件
+    $(function () {
+        // debugger;
+        $.get("/userServlet?methodName=getSession", function (result) {
+            if (result.flag) {
+                //session中有用户数据 显示已登录 返回一个用户名即可
+                $(".login_out").html("");
+                $(".login > span").html("欢迎回来," + result.data);
+            } else {
+                //没有session数据
+                $(".login > span").html("");
+                $(".login  a").html("");
+            }
+        }, "json");
+    });
+
+    $("#loginOut").click(function () {
+        $.get("/userServlet?method=loginOut", function (result) {
+
+        }, "json");
+    });
+
+    /**
+     * 1. header.html页面加载完成后，发送异步请求查询类别列表；
+     2. CategoryServlet类处理请求和响应，具体业务交由CategoryService处理；
+     3. CategoryService中，接收请求后：从redis中获取类别数据：
+     1. 如果redis中有数据：直接将数据返回；
+     2. 如果redis中没有数据：
+     1. 从数据库中查询类别列表数据，并将其转化成json字符串；
+     2. 将json字符串存储到redis中，然后返回给web层；
+     4. header.html页面获取到类别列表后，将其展示到导航栏位置；
+
+     */
+
+    //页面加载事件
+    $(function () {
+        $.get("/categoryServlet?methodName=queryAllCategory", function (result) {
+            // debugger;
+            console.log(result);
+            //js中result只要不为空就为真
+            if (result) {
+                //遍历categoryList数组
+                var categoryHtml = '<li class="nav-active"><a href="index.html">首页</a></li>';
+
+                $(result).each(function (index, element) {
+                    //根据cid查询数据 展示数据在页面上
+                    categoryHtml += '<li><a href="route_list.html?cid=' + element.cid + '">' + element.cname + '</li>';
+                });
+                categoryHtml += '<li><a href="favoriterank.html">收藏排行榜</a></li>';
+
+                $(".nav").html(categoryHtml);
+            }
+
+            /*
+                把拼接的数据插入到ul中
+                $(categoryHtml).appendTo($("#categoryList"));
+            */
+        }, "json");
+    });
+
+</script>
+
+<script>
+
+
+    //jquryui - autocomplete插件
+    $(function() {
+        var cache = {};
+        $( "#search_input" ).autocomplete({
+            minLength: 2,
+            source: function( request, response ) {
+                var term = request.term;
+                if ( term in cache ) {
+                    response( cache[ term ] );
+                    return;
+                }
+
+                $.getJSON( "routeServlet?methodName=queryByKey", request, function( data, status, xhr ) {
+                    cache[ term ] = data;
+                    response( data );
+                });
+            }
+        });
+    });
+</script>
